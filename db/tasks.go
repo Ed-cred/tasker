@@ -96,11 +96,16 @@ func CompleteTask(key int) error {
 // GetCompletedTasks returns all values of completed tasks for the current day
 func GetCompletedTasks() ([]string, error) {
 	var completedTasks []string
+	now := time.Now().Local()
 	err := db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(completeBucket).Cursor()
-		min := time.Now().Local().Format(time.RFC3339)
-		max := time.Now().Local().AddDate(0, 0, 1).Format(time.RFC3339)
+		min := bod(now).Format(time.RFC3339)
+		max := bod(now).AddDate(0, 0, 1).Format(time.RFC3339)
 		for k, v := c.Seek([]byte(min)); k != nil && bytes.Compare(k, []byte(max)) <= 0; k, v = c.Next() {
+
+			if v == nil {
+				log.Println("key was found but value was nil")
+			}
 			completedTasks = append(completedTasks, string(v))
 		}
 		return nil
@@ -109,6 +114,11 @@ func GetCompletedTasks() ([]string, error) {
 		log.Println("failed to get completed tasks", err)
 	}
 	return completedTasks, nil
+}
+
+func bod(t time.Time) time.Time {
+	year, month, day := t.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, time.Local)
 }
 
 func itob(v int) []byte {
