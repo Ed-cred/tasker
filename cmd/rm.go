@@ -37,7 +37,7 @@ var rmCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("Failed to remove task \"%d\". Error: %s\n", id, err)
 			} else {
-				fmt.Printf("Deleted task \"%d\".\n", id)
+				fmt.Printf("Deleted task \"%s\".\n", task.Value)
 			}
 		}
 	},
