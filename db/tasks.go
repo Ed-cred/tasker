@@ -82,13 +82,13 @@ func CompleteTask(key int) error {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(taskBucket)
 		b2 := tx.Bucket(completeBucket)
-		task := b.Get(itob(key))
-		completedKey, err := time.Now().MarshalBinary()
-		if err != nil {
-			log.Println("failed to marshal key:", err)
+		if b2 == nil {
+			log.Println("we didn't even initialize this bucket")
 		}
-		b2.Put(completedKey, task)
-		return b.Delete(itob(key))
+		task := b.Get(itob(key))
+		completedKey := time.Now().Local().Format(time.RFC3339)
+		b.Delete(itob(key))
+		return b2.Put([]byte(completedKey), task)
 	})
 	return err
 }
@@ -98,17 +98,9 @@ func GetCompletedTasks() ([]string, error) {
 	var completedTasks []string
 	err := db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(completeBucket).Cursor()
-		min, err := time.Now().MarshalBinary()
-		if err != nil {
-			log.Println("error marshalling min date:", err)
-			return err
-		}
-		max, err := time.Now().AddDate(0, 0, 1).MarshalBinary()
-		if err != nil {
-			log.Println("error marshalling max date:", err)
-			return err
-		}
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+		min := time.Now().Local().Format(time.RFC3339)
+		max := time.Now().Local().AddDate(0, 0, 1).Format(time.RFC3339)
+		for k, v := c.Seek([]byte(min)); k != nil && bytes.Compare(k, []byte(max)) <= 0; k, v = c.Next() {
 			completedTasks = append(completedTasks, string(v))
 		}
 		return nil
