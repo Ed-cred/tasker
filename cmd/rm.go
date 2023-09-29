@@ -8,9 +8,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var doCmd = &cobra.Command{
-	Use:   "do",
-	Short: "Marks a task as complete",
+// rmCmd represents the rm command
+var rmCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "Removes a task without marking it as completed.",
 	Run: func(cmd *cobra.Command, args []string) {
 		var ids []int
 		for _, arg := range args {
@@ -32,16 +33,16 @@ var doCmd = &cobra.Command{
 				continue
 			}
 			task := tasks[id - 1]
-			err := db.CompleteTask(task.Key)
+			err := db.DeleteTask(task.Key)
 			if err != nil {
-				fmt.Printf("Failed to mark task \"%d\" as complete. Error: %s\n", id, err)
+				fmt.Printf("Failed to remove task \"%d\". Error: %s\n", id, err)
 			} else {
-				fmt.Printf("Marked task \"%d\" as complete.\n", id)
+				fmt.Printf("Deleted task \"%d\".\n", id)
 			}
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(doCmd)
+	RootCmd.AddCommand(rmCmd)
 }
